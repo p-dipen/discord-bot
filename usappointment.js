@@ -4,12 +4,15 @@ const axios = require('axios');
 const dotenv = require('dotenv');
 dotenv.config();
 
-(async () => {
+const usVisaAppointment = async (str, res) => {
   //#region Command line args
-  const args = parseArgs(process.argv.slice(2), {
+  console.log(str.split(' '));
+  const args = parseArgs(str.split(' '), {
     string: ['u', 'p', 'c', 'a', 'n', 'd', 'r'],
     boolean: ['g'],
   });
+  console.log(args);
+
   const currentDate = new Date(args.d);
   const usernameInput = args.u || process.env.USER;
   const passwordInput = args.p || process.env.PASS;
@@ -141,9 +144,9 @@ dotenv.config();
 
   async function runLogic() {
     //#region Init puppeteer
-    const browser = await puppeteer.launch();
+    // const browser = await puppeteer.launch();
     // Comment above line and uncomment following line to see puppeteer in action
-    // const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
     const timeout = 5000;
     const navigationTimeout = 60000;
@@ -501,24 +504,32 @@ dotenv.config();
     //#endregion
   }
 
-  while (true) {
-    try {
-      const result = await runLogic();
-
-      if (result) {
-        notify('Successfully scheduled a new appointment');
-        break;
-      }
-    } catch (err) {
-      // Swallow the error and keep running in case we encountered an error.
+  // while (true) {
+  try {
+    const result = await runLogic();
+    const logStatement = `The title of this blog post `;
+    console.log(logStatement);
+    if (result) {
+      notify('Successfully scheduled a new appointment');
+      // break;
     }
-    if (!torontoOnly) {
-      if (index < arr.length) {
-        index++;
-      } else {
-        index = 0;
-      }
-    }
-    await sleep(retryTimeout);
+    res.send(logStatement);
+  } catch (err) {
+    // Swallow the error and keep running in case we encountered an error.
+    console.error(err);
+    res.send(`Something went wrong while running Puppeteer: ${err}`);
   }
-})();
+  if (!torontoOnly) {
+    if (index < arr.length) {
+      index++;
+    } else {
+      index = 0;
+    }
+  }
+  // await sleep(retryTimeout);
+  // }
+};
+
+// "start": "node usappointment.js -r \"ca\" -d \"2024-03-04\" -a 52463688 -c 94 -t 120 -g"
+
+module.exports = { usVisaAppointment };
