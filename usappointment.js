@@ -332,7 +332,7 @@ const usVisaAppointment = async (str, res) => {
       if (availableDates.length <= 0) {
         let id = torontoOnly ? consularId : arr[index];
         log('There are no available dates for consulate with id ' + id);
-        notify('testing');
+        // notify('testing');
         await browser.close();
         return false;
       }
@@ -527,7 +527,10 @@ const usVisaAppointment = async (str, res) => {
   } catch (err) {
     // Swallow the error and keep running in case we encountered an error.
     console.error(err);
-    res.send(`Something went wrong while running Puppeteer: ${err}`);
+    log(`This is error ${JSON.stringify(err)}`);
+    res
+      .status(500)
+      .send(`Something went wrong while running Puppeteer: ${err}`);
   }
   if (!torontoOnly) {
     if (index < arr.length) {
