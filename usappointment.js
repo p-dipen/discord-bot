@@ -325,9 +325,10 @@ const usVisaAppointment = async (str, res) => {
           id +
           '.json?appointments[expedite]=false',
       );
-
-      const availableDates = JSON.parse(await response.text());
-      log(JSON.stringify(availableDates));
+      let resp = await response.text();
+      log(resp);
+      const availableDates = JSON.parse(resp);
+      console.log(availableDates);
       if (availableDates.length <= 0) {
         let id = torontoOnly ? consularId : arr[index];
         log('There are no available dates for consulate with id ' + id);
