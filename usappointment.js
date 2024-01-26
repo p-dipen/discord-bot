@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const parseArgs = require('minimist');
 const axios = require('axios');
+const notifyDiscord = require('./discordNotification');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -121,6 +122,7 @@ const usVisaAppointment = async (str, res) => {
   async function log(msg) {
     const currentDate = '[' + new Date().toLocaleString() + ']';
     console.log(currentDate, msg);
+    notifyDiscord(msg);
   }
 
   async function notify(msg) {
@@ -325,13 +327,11 @@ const usVisaAppointment = async (str, res) => {
       );
 
       const availableDates = JSON.parse(await response.text());
-      console.log(availableDates);
+      log(JSON.stringify(availableDates));
       if (availableDates.length <= 0) {
-        log(
-          'There are no available dates for consulate with id ' + torontoOnly
-            ? consularId
-            : arr[index],
-        );
+        let id = torontoOnly ? consularId : arr[index];
+        log('There are no available dates for consulate with id ' + id);
+        notify('testing');
         await browser.close();
         return false;
       }
@@ -394,10 +394,8 @@ const usVisaAppointment = async (str, res) => {
         { timeout, visible: true },
       );
       await scrollIntoViewIfNeeded(element, timeout);
-      await page.select(
-        '#appointments_consulate_appointment_facility_id',
-        torontoOnly ? consularId : arr[index],
-      );
+      let id = torontoOnly ? consularId : arr[index];
+      await page.select('#appointments_consulate_appointment_facility_id', id);
       await sleep(1000);
     }
 
