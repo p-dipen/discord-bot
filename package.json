@@ -1,0 +1,14 @@
+{
+  "main": "usappointment.js",
+  "engines": {
+    "node": "18.x"
+  },
+  "scripts": {
+    "start": "node usappointment.js -r \"ca\" -d \"2024-03-04\" -a 52463688 -c 94 -t 30 -g"
+  },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "minimist": "^1.2.6",
+    "puppeteer": "^13.5.2"
+  }
+}
