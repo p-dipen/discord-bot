@@ -146,7 +146,18 @@ const usVisaAppointment = async (str, res) => {
     //#region Init puppeteer
     // const browser = await puppeteer.launch();
     // Comment above line and uncomment following line to see puppeteer in action
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({
+      args: [
+        '--disable-setuid-sandbox',
+        '--no-sandbox',
+        '--single-process',
+        '--no-zygote',
+      ],
+      executablePath:
+        process.env.NODE_ENV === 'production'
+          ? process.env.PUPPETEER_EXECUTABLE_PATH
+          : puppeteer.executablePath(),
+    });
     const page = await browser.newPage();
     const timeout = 5000;
     const navigationTimeout = 60000;
