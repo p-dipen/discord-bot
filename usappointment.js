@@ -9,7 +9,7 @@ const usVisaAppointment = async (str, res) => {
   //#region Command line args
   console.log(str.split(' '));
   const args = parseArgs(str.split(' '), {
-    string: ['u', 'p', 'c', 'a', 'n', 'd', 'r'],
+    string: ['u', 'p', 'c', 'a', 'n', 'd', 'r', 'e'],
     boolean: ['g'],
   });
   console.log(args);
@@ -17,6 +17,7 @@ const usVisaAppointment = async (str, res) => {
   const currentDate = new Date(args.d);
   const usernameInput = args.u || process.env.USER;
   const passwordInput = args.p || process.env.PASS;
+  const appointmentDate = new Date(args.e || process.env.APPOINT);
   const appointmentId = args.a;
   const retryTimeout = args.t * 1000;
   const consularId = args.c;
@@ -27,7 +28,7 @@ const usVisaAppointment = async (str, res) => {
   var index = 0;
   const arr = [91, 92, 93, 94, 95];
   //#endregion
-  console.log(userToken, usernameInput, passwordInput);
+  console.log(appointmentDate);
   //#region Helper functions
   async function waitForSelectors(selectors, frame, options) {
     for (const selector of selectors) {
@@ -309,45 +310,49 @@ const usVisaAppointment = async (str, res) => {
 
     // We are logged in now. Check available dates from the API
     {
-      const targetPage = page;
-      await targetPage.setExtraHTTPHeaders({
-        Accept: 'application/json, text/javascript, */*; q=0.01',
-        'X-Requested-With': 'XMLHttpRequest',
-      });
-      const id = torontoOnly ? consularId : arr[index];
-      console.log(id);
-      const response = await targetPage.goto(
-        'https://ais.usvisa-info.com/en-' +
-          region +
-          '/niv/schedule/' +
-          appointmentId +
-          '/appointment/days/' +
-          id +
-          '.json?appointments[expedite]=false',
-      );
-      let resp = await response.text();
-      log(resp);
-      const availableDates = JSON.parse(resp);
-      console.log(availableDates);
-      if (availableDates.length <= 0) {
-        let id = torontoOnly ? consularId : arr[index];
-        log('There are no available dates for consulate with id ' + id);
-        // notify('testing');
-        await browser.close();
-        return false;
-      }
-
-      const firstDate = new Date(availableDates[0].date);
-
-      if (firstDate > currentDate) {
-        log(
-          'There is not an earlier date available than ' +
-            currentDate.toISOString().slice(0, 10),
+      let availableDates;
+      while (true) {
+        const targetPage = page;
+        await targetPage.setExtraHTTPHeaders({
+          Accept: 'application/json, text/javascript, */*; q=0.01',
+          'X-Requested-With': 'XMLHttpRequest',
+        });
+        const id = torontoOnly ? consularId : arr[index];
+        console.log(id);
+        const response = await targetPage.goto(
+          'https://ais.usvisa-info.com/en-' +
+            region +
+            '/niv/schedule/' +
+            appointmentId +
+            '/appointment/days/' +
+            id +
+            '.json?appointments[expedite]=false',
         );
-        await browser.close();
-        return false;
-      }
 
+        availableDates = JSON.parse(await response.text());
+        console.log(availableDates);
+        if (availableDates.length <= 0) {
+          let id = torontoOnly ? consularId : arr[index];
+          console.log(
+            'There are no available dates for consulate with id ' + id,
+          );
+          await browser.close();
+          return false;
+        }
+
+        const firstDate = new Date(availableDates[0].date);
+
+        if (firstDate > currentDate) {
+          log(
+            'There is not an earlier date available than ' +
+              currentDate.toISOString().slice(0, 10),
+          );
+        }
+
+        if (firstDate < appointmentDate) {
+          break;
+        }
+      }
       notify('Found an earlier date! ' + firstDate.toISOString().slice(0, 10));
     }
 
