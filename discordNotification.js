@@ -4,12 +4,16 @@ dotenv.config();
 
 const discordWebHook = process.env.DISCORD_WEBHOOK;
 
-const notifyDiscord = (message) => {
+const notifyDiscord = async (message) => {
   let payload = {
     username: 'Webhook',
     content: message,
   };
-  return axios.post(discordWebHook, payload);
+  try {
+    await axios.post(discordWebHook, payload);
+  } catch (error) {
+    console.log('This is error in discordWebHook');
+  }
 };
 
 module.exports = notifyDiscord;
