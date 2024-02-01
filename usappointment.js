@@ -544,8 +544,9 @@ const usVisaAppointment = async (str, res) => {
         // break;
       }
       res.send(logStatement);
+    } else {
+      res.send('Waiting for site to back');
     }
-    res.send('Waiting for site to back');
   } catch (err) {
     // Swallow the error and keep running in case we encountered an error.
     console.error(JSON.stringify(err));
