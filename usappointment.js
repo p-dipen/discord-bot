@@ -157,7 +157,11 @@ const usVisaAppointment = async (str, res) => {
       message: msg,
     };
 
-    await axios.post(apiEndpoint, data);
+    try {
+      await axios.post(apiEndpoint, data);
+    } catch (err) {
+      console.log(JSON.stringify(err));
+    }
   }
   //#endregion
 
@@ -358,17 +362,11 @@ const usVisaAppointment = async (str, res) => {
 
         const firstDate = new Date(availableDates[0].date);
 
-        if (firstDate > currentDate) {
-          log(
-            'There is not an earlier date available than ' +
-              currentDate.toISOString().slice(0, 10),
-          );
-        }
-
         if (firstDate < appointmentDate) {
           break;
         }
       }
+      log('Found an earlier date! ' + firstDate.toISOString().slice(0, 10));
       notify('Found an earlier date! ' + firstDate.toISOString().slice(0, 10));
     }
 
