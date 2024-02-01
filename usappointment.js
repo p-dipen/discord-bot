@@ -3,8 +3,20 @@ const parseArgs = require('minimist');
 const axios = require('axios');
 const notifyDiscord = require('./discordNotification');
 const dotenv = require('dotenv');
+const main = require('./retry');
 dotenv.config();
+let siteIsAlive = true;
 
+const retrySiteBack = async () => {
+  siteIsAlive = false;
+  try {
+    await main();
+    siteIsAlive = true;
+  } catch (err) {
+    console.error(err);
+    siteIsAlive = true;
+  }
+};
 const usVisaAppointment = async (str, res) => {
   //#region Command line args
   console.log(str.split(' '));
@@ -123,7 +135,11 @@ const usVisaAppointment = async (str, res) => {
   async function log(msg) {
     const currentDate = '[' + new Date().toLocaleString() + ']';
     console.log(currentDate, msg);
-    notifyDiscord(msg);
+    try {
+      notifyDiscord(msg);
+    } catch (err) {
+      console.error('Discord notification', JSON.stringify(err));
+    }
   }
 
   async function notify(msg) {
@@ -163,7 +179,7 @@ const usVisaAppointment = async (str, res) => {
     });
     const page = await browser.newPage();
     const timeout = 5000;
-    const navigationTimeout = 60000;
+    const navigationTimeout = 30000;
     const smallTimeout = 100;
     page.setDefaultTimeout(timeout);
     page.setDefaultNavigationTimeout(navigationTimeout);
@@ -521,20 +537,27 @@ const usVisaAppointment = async (str, res) => {
 
   // while (true) {
   try {
-    const result = await runLogic();
-    const logStatement = `The title of this blog post `;
-    console.log(logStatement);
-    if (result) {
-      notify('Successfully scheduled a new appointment');
-      // break;
+    if (siteIsAlive) {
+      const result = await runLogic();
+      const logStatement = `The title of this blog post `;
+      console.log(logStatement);
+      if (result) {
+        notify('Successfully scheduled a new appointment');
+        // break;
+      }
+      res.send(logStatement);
     }
-    res.send(logStatement);
+    res.send('Waiting for site to back');
   } catch (err) {
     // Swallow the error and keep running in case we encountered an error.
-    console.error(err);
-    log(`This is error ${JSON.stringify(err)}`);
+    console.error(JSON.stringify(err));
+    if (err.name != 'TimeoutError') {
+      log(`This is error ${JSON.stringify(err)}`);
+    } else {
+      retrySiteBack();
+    }
     res
-      .status(500)
+      .status(err.name != 'TimeoutError' ? 500 : 200)
       .send(`Something went wrong while running Puppeteer: ${err}`);
   }
   if (!torontoOnly) {
